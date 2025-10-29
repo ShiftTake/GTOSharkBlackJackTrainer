@@ -1,0 +1,20 @@
+{
+  "name": "gto-shark-verification-server",
+  "version": "1.0.0",
+  "description": "Backend verification API for GTO Shark Blackjack Trainer",
+  "main": "server/verifyPurchase.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server/verifyPurchase.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "cors": "^2.8.5",
+    "node-fetch": "^3.3.2"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "author": "GTO Shark",
+  "license": "MIT"
+}
