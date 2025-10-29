@@ -1,1 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>GTO Shark – Blackjack Strategy Trainer</title>
+
+  <!-- PWA + iOS fullscreen -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#004d40" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+  <!-- Icons -->
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png" />
+  <link rel="icon" href="assets/icons/icon-192.png" />
+
+  <!-- Local Tailwind + Fonts -->
+  <link rel="stylesheet" href="assets/css/tailwind.min.css" />
+  <link rel="stylesheet" href="assets/fonts/inter.css" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body class="p-4 sm:p-8 bg-[#00251a] text-[#e0f7fa]">
+
+  <div class="casino-table w-full max-w-5xl p-6 md:p-10 rounded-3xl mx-auto border-4 border-black"
+       style="background:#004d40; box-shadow:0 10px 40px rgba(0,0,0,.7), inset 0 0 50px rgba(0,0,0,.4)">
+    <h1 class="text-3xl font-black text-center mb-4 border-b border-white/30 pb-2 uppercase tracking-wide">
+      Blackjack Strategy GTO Trainer
+    </h1>
+
+    <!-- Configuration Selector -->
+    <div class="mb-6 text-center bg-black/20 p-4 rounded-xl">
+      <label for="game-version" class="text-lg font-bold mr-3 block md:inline-block mb-2 md:mb-0">
+        Select Game Rules:
+      </label>
+      <select id="game-version"
+              class="p-2 rounded-lg bg-gray-800 text-white font-medium w-full md:w-auto border border-cyan-400">
+        <option value="6DeckS17">Classic 6-Deck (S17)</option>
+        <option value="SingleDeckH17">Single-Deck (H17)</option>
+        <option value="DoubleDeckS17">Double-Deck (S17)</option>
+        <option value="VegasStrip">Vegas Strip (4D S17)</option>
+        <option value="AtlanticCity">Atlantic City (8D S17 + Surrender)</option>
+        <option value="FreeBet">Free Bet Blackjack (22 Push)</option>
+        <option value="Switch">Blackjack Switch (22 Push, BJ 1:1)</option>
+        <option value="Spanish21">Spanish 21 (No 10s)</option>
+      </select>
+    </div>
+
+    <!-- Dealer Hand -->
+    <div class="mb-8 text-center">
+      <h2 class="text-2xl font-extrabold mb-3 text-cyan-200">
+        Dealer Up Card (<span id="dealer-value">?</span>)
+      </h2>
+      <div id="dealer-hand" class="flex justify-center flex-wrap min-h-[90px]"></div>
+    </div>
+
+    <!-- Player Hand -->
+    <div class="mb-8 text-center">
+      <h2 class="text-2xl font-extrabold mb-3 text-white">
+        Your Hand Value (<span id="player-value">?</span>)
+      </h2>
+      <div id="player-hand" class="flex justify-center flex-wrap min-h-[90px]"></div>
+    </div>
+
+    <!-- Game Info and Feedback -->
+    <div id="feedback"
+         class="text-center text-xl font-semibold p-4 rounded-xl mb-6 min-h-[56px] bg-white/10 shadow-inner">
+      Select a version and click 'New Hand' to start.
+    </div>
+
+    <!-- Action Buttons -->
+    <div id="controls" class="flex flex-wrap justify-center gap-3 md:gap-6 mb-8">
+      <button id="hit-btn" class="action-button bg-btn-action hover:bg-red-600 text-white font-bold py-3 px-6 rounded-full uppercase text-sm" disabled>Hit</button>
+      <button id="stand-btn" class="action-button bg-btn-action hover:bg-red-600 text-white font-bold py-3 px-6 rounded-full uppercase text-sm" disabled>Stand</button>
+      <button id="double-btn" class="action-button bg-btn-action hover:bg-red-600 text-white font-bold py-3 px-6 rounded-full uppercase text-sm" disabled>Double</button>
+      <button id="split-btn" class="action-button bg-btn-action hover:bg-red-600 text-white font-bold py-3 px-6 rounded-full uppercase text-sm" disabled>Split</button>
+      <button id="surrender-btn" class="action-button bg-btn-surrender hover:bg-yellow-600 text-gray-900 font-bold py-3 px-6 rounded-full uppercase text-sm hidden" disabled>Surrender</button>
+    </div>
+
+    <!-- Control Buttons -->
+    <div class="text-center flex justify-center gap-4">
+      <button id="repeat-hand-btn" class="action-button bg-orange-500 hover:bg-orange-400 text-white font-bold py-3 px-6 rounded-full uppercase text-sm" disabled>Repeat Hand</button>
+      <button id="restart-stats-btn" class="action-button bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-6 rounded-full uppercase text-sm">Restart Stats</button>
+      <button id="new-hand-btn" class="bg-emerald-500 hover:bg-emerald-400 text-gray-900 font-extrabold py-3 px-10 rounded-full uppercase text-base shadow-lg shadow-emerald-900/50 transition-colors duration-150">New Hand</button>
+    </div>
+
+    <!-- Stats -->
+    <div class="mt-8 pt-4 border-t border-white/20 bg-black/10 p-4 rounded-xl">
+      <h3 class="text-xl font-bold mb-3 text-center text-cyan-400">Strategy Accuracy</h3>
+      <div class="flex flex-wrap justify-around text-center">
+        <div class="p-2">
+          <p class="text-lg text-white font-medium">Hands Played</p>
+          <p id="stats-total" class="text-4xl font-black text-indigo-400">0</p>
+        </div>
+        <div class="p-2">
+          <p class="text-lg text-white font-medium">Correct Moves</p>
+          <p id="stats-correct" class="text-4xl font-black text-green-400">0</p>
+        </div>
+        <div class="p-2">
+          <p class="text-lg text-white font-medium">Accuracy</p>
+          <p id="stats-accuracy" class="text-4xl font-black text-yellow-400">0%</p>
+        </div>
+      </div>
+      <div class="text-center mt-2">
+        <button id="restore-btn" class="text-xs text-cyan-400 underline">Restore Purchases</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Subscription Modal -->
+  <div id="subscription-modal" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50">
+    <div class="bg-slate-800 p-8 rounded-2xl shadow-2xl max-w-md w-full text-center border border-slate-700">
+      <h2 class="text-3xl font-extrabold text-indigo-400 mb-4">Upgrade to Continue</h2>
+      <p class="text-slate-300 mb-6">
+        You’ve played your 4 free hands. Unlock unlimited training and stats for
+        <span class="font-bold text-green-400">$29.99/month</span>.
+      </p>
+      <button id="subscribe-btn"
+              class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-6 rounded-full w-full mb-3">
+        Subscribe Now
+      </button>
+      <button id="close-modal-btn" class="text-slate-400 hover:text-white text-sm underline">Maybe Later</button>
+    </div>
+  </div>
+
+  <footer class="text-center text-xs mt-6 text-gray-400">
+    © 2025 GTO Shark — Training & simulation only. No real money gambling.
+    <br />
+    <a href="privacy.html" class="underline">Privacy Policy</a> •
+    <a href="terms.html" class="underline">Terms of Use</a>
+  </footer>
+
+  <!-- App JS -->
+  <script src="assets/js/main.js" defer></script>
+  <script src="assets/js/paywall.js" defer></script>
+</body>
+</html>
 
